@@ -8,6 +8,7 @@
 <img src="PreviewImage2.png" alt="PreviewImage2" style="zoom:33%;" />
 <img src="PreviewImage3.png" alt="PreviewImage3" style="zoom:33%;" />
 <div>
+使用指南见：[SwiftUI 计算器使用指南](https://jo-cruise.github.io/posts/SwiftUICalculatorIntroduction/)
 
 # SwiftUICalculator
 
@@ -20,3 +21,5 @@ The effect diagram is as follows
 <img src="PreviewImage2.png" alt="PreviewImage2" style="zoom:33%;" />
 <img src="PreviewImage3.png" alt="PreviewImage3" style="zoom:33%;" />
 <div>
+
+For usage guide, see: [SwiftUI Calculator Usage Guide](https://jo-cruise.github.io/posts/SwiftUICalculatorIntroduction/)
