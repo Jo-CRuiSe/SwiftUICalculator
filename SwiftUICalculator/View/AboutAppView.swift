@@ -9,13 +9,19 @@ import SwiftUI
 
 struct AboutAppView: View {
     var body: some View {
-       
         VStack {
             AppIcon()
                 .clipShape(RoundedRectangle(cornerRadius: 10))
             Text(LocalizedStringKey("Calculator"))
-        }
-            
+        }   
+        Text(
+            """
+            ds
+            dsdsdsd
+            sds
+            """
+        )
+        
     }
 }
 

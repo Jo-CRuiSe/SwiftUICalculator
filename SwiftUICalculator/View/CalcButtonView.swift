@@ -6,10 +6,9 @@
 //
 
 import SwiftUI
-import AVKit
 
-
-
+//Code based on https://www.youtube.com/watch?v=GZmubIUjmx4
+                                                                                
 struct CalcButtonView: View {
     @EnvironmentObject var viewModel: ContentViewModel
     @EnvironmentObject var settingsViewModel: SettingsViewModel
@@ -29,10 +28,10 @@ struct CalcButtonView: View {
     var backgroundColor: Color {
         if let action = calcButton.action,
            action == viewModel.action,
-           viewModel.shouldClear,
-           viewModel.newAction {
+            viewModel.constantlyLit{
             return .white
-        } else {
+        }else
+        {
             return Color(calcButton.color.rawValue)
         }
     }
@@ -40,8 +39,7 @@ struct CalcButtonView: View {
     var foregroundColor: Color {
         if let action = calcButton.action,
            action == viewModel.action,
-           viewModel.shouldClear,
-           viewModel.newAction
+           viewModel.constantlyLit
         {
             return Color("CalcOrange")
         } else if calcButton.color == .lightGray {
@@ -61,7 +59,7 @@ struct CalcButtonView: View {
         }, label: {
             if let text = calcButton.buttonText {
                 if text == "AC" {
-                    if viewModel.display == "0" && viewModel.stacked == false {
+                    if viewModel.stacked == false {
                         Text(text)
                             .font(.system(size: 35))
                     } else {

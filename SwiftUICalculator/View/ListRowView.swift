@@ -13,17 +13,12 @@ struct ListRowView: View {
     var body: some View {
         
         HStack {
-            
             Text(item.originalText)
                 .foregroundStyle(.primary)
             Spacer()
             Text(item.replacingText)
                 .foregroundStyle(.secondary)
-            
-            
         }
-        
-        
     }
 }
 

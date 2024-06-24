@@ -32,9 +32,11 @@ enum buttonType: String {
 }
 
 struct ContentView: View {
+    @EnvironmentObject var appstate: AppState
     @StateObject var viewModel = ContentViewModel()
     @StateObject var listviewModel = TextReplacementViewModel()
     @StateObject var settingsViewModel = SettingsViewModel()
+    
     @State var isShaked = false
     @State var isLongPressed = false
     @State var birthdayCakeScene = BirthdayCakeRain()
@@ -42,34 +44,43 @@ struct ContentView: View {
     @State var floatingScene = Floating()
     @State var fontSize = 95
     @State var fontWeight = "Light"
+    @State var widthAlignment = "trailing"
+    @State var heightAlignment = "bottom"
+    @State var lineSpacing: Float = 10.0
     @State var showBeatingHeart = false
     
     
-    var tiggerDict = ShakeText.tiggerDict
     var body: some View {
         NavigationStack{
             ZStack {
                 VStack(spacing: 0) {
                     Spacer()
-                    HStack {
-                        Spacer()
-                        
                         Text(
                             listviewModel.items.values.contains(viewModel.display) ? viewModel.display : viewModel.display.formatString()
                         )
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .frame(maxHeight: .infinity, alignment: .bottom)
+//                        Text(
+//                            """
+//                            dsffsdfs
+//                            dfd
+//                            fdfdf
+//                            dsd
+//                            """
+//                            
+//                        )
+                        .frame(maxWidth: .infinity, alignment: viewModel.ACPressed ? .trailing : listviewModel.convertAlignment(alignment: widthAlignment))
+                        .frame(maxHeight: .infinity, alignment:viewModel.ACPressed ? .bottom : listviewModel.convertAlignment(alignment: heightAlignment))
                         .padding(.bottom, 5)
                         .font(
-                            //.system(size: 95.0, weight: Font.Weight.light)
                             viewModel.ACPressed ? .system(size: 95.0, weight: .light) : .system(size: CGFloat(fontSize), weight: listviewModel.convertWeight(weight: fontWeight))
                         )
                         .foregroundStyle(Color.white)
                         .background(Color.black)
-                        .lineLimit(listviewModel.items.values.contains(viewModel.display) ? settingsViewModel.lineLimit : 1)
-                        .minimumScaleFactor(listviewModel.items.values.contains(viewModel.display) ? settingsViewModel.minimumScaleFactor : 0.5)
+                        .lineSpacing(listviewModel.items.values.contains(viewModel.display) ? CGFloat(lineSpacing) : 10.0)
+                        .lineLimit(listviewModel.items.values.contains(viewModel.display) ? 8 : 1)
+//                        .minimumScaleFactor(listviewModel.items.values.contains(viewModel.display) ? settingsViewModel.minimumScaleFactor : 0.5)
+                        .minimumScaleFactor(0.5)
                         .onLongPressGesture {
-                            if viewModel.display == settingsViewModel.tiggerPasscode {
+                            if viewModel.display.replacingOccurrences(of: ",", with: "") == settingsViewModel.tiggerPasscode {
                                 isLongPressed.toggle()
                             }
                         }
@@ -79,15 +90,24 @@ struct ContentView: View {
                                     viewModel.userSwiped()
                                 }
                         )
+                        .onChange(of: viewModel.display, { oldValue, newValue in
+                            appstate.display = viewModel.display
+                        })
                         .onShake {
                             if
-                                let value =  listviewModel.items[viewModel.display],
-                                let enabled = listviewModel.itemEnabled[viewModel.display],
-                                let font_size = listviewModel.itemFontSize[viewModel.display],
-                                let font_weight = listviewModel.itemFontWeight[viewModel.display],
+                                let value = listviewModel.items[viewModel.display.formatString().replacingOccurrences(of: ",", with: "")],
+                                let enabled = listviewModel.itemEnabled[viewModel.display.formatString().replacingOccurrences(of: ",", with: "")],
+                                let font_size = listviewModel.itemFontSize[viewModel.display.formatString().replacingOccurrences(of: ",", with: "")],
+                                let font_weight = listviewModel.itemFontWeight[viewModel.display.formatString().replacingOccurrences(of: ",", with: "")],
+                                let width_alignment = listviewModel.itemWidthAlignment[viewModel.display.formatString().replacingOccurrences(of: ",", with: "")],
+                                let height_alignment = listviewModel.itemHeightAlignment[viewModel.display.formatString().replacingOccurrences(of: ",", with: "")],
+                                let line_spacing = listviewModel.itemLineSpacing[viewModel.display.formatString().replacingOccurrences(of: ",", with: "")],
                                 enabled == true {
                                 fontSize = font_size
                                 fontWeight = font_weight
+                                widthAlignment = width_alignment
+                                heightAlignment = height_alignment
+                                lineSpacing = line_spacing
                                 viewModel.display = value
                                 viewModel.canDeleteLastDigit = false
                                 viewModel.ACPressed = false
@@ -114,13 +134,13 @@ struct ContentView: View {
                                     showBeatingHeart = true
                                 } else if value.contains("💕") {
                                     floatingScene.node.particleBirthRate = settingsViewModel.birthRate
-                                }
+                                } 
                                 
                                 
                                 Timer.scheduledTimer(withTimeInterval: settingsViewModel.emissionDuration, repeats: false) { _ in
                                     birthdayCakeScene.node.particleBirthRate = 0.0
-                                    snowingScene.node.particleBirthRate = 0.0
                                     floatingScene.node.particleBirthRate = 0.0
+                                    snowingScene.node.particleBirthRate = 0.0
                                 }
                                 Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { _ in
                                     showBeatingHeart = false
@@ -136,7 +156,7 @@ struct ContentView: View {
                         .sensoryFeedback(.impact, trigger: isLongPressed) { oldValue, newValue in
                             settingsViewModel.pressFeedback == true
                         }
-                    }
+                    
                     .padding(.horizontal)
                     .padding(.bottom, 5)
                     
@@ -162,24 +182,6 @@ struct ContentView: View {
                     SettingsView()
                 })
                 
-                //                SpriteView(scene: birthdayCakeScene, options: [.allowsTransparency])
-                //                    .ignoresSafeArea()
-                //                    .allowsHitTesting(false)
-                //                SpriteView(scene: blowingKissScene, options: [.allowsTransparency])
-                //                    .ignoresSafeArea()
-                //                    .allowsHitTesting(false)
-                //                SpriteView(scene: partyingScene, options: [.allowsTransparency])
-                //                    .ignoresSafeArea()
-                //                    .allowsHitTesting(false)
-                //                SpriteView(scene: smilingHeartScene, options: [.allowsTransparency])
-                //                    .ignoresSafeArea()
-                //                    .allowsHitTesting(false)
-                //                SpriteView(scene: sparklesScene, options: [.allowsTransparency])
-                //                    .ignoresSafeArea()
-                //                    .allowsHitTesting(false)
-//                SpriteView(scene: flowersScene, options: [.allowsTransparency])
-//                    .ignoresSafeArea()
-//                    .allowsHitTesting(false)
                 SpriteView(scene: snowingScene, options: [.allowsTransparency])
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
@@ -209,6 +211,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-    //        .environment(\.local, .init(identifier: "zh-Hans"))
+        .environmentObject(AppState())
 }
 

@@ -8,6 +8,15 @@
 import Foundation
 import SwiftUI
 
+enum lastOprationType {
+    case operand
+    case operation
+    case equal
+    case plusMinus
+    case percent
+    case clear
+}
+
 public class ContentViewModel:ObservableObject{
     @Published var display: String = "0" {
         didSet {
@@ -15,19 +24,19 @@ public class ContentViewModel:ObservableObject{
         }
     }
     @Published var action: Action?
-    @Published var shouldClear: Bool = false
-    @Published var newAction: Bool = false
-    @Published var stacked: Bool = false
-    @Published var inputOrder: String = ""
+    @Published var constantlyLit: Bool = false
     @Published var ACPressed = false
     
-    //private var stack: [String] = [""]
-    private var prevPriority = 0;
-    private var currentPriority = 0;
+    
     private var operandStack: [String] = []
     private var operatorStack: [String] = []
-    private var lastPressedButton = "operand"
+    private var lastPressedButton: lastOprationType = .clear
+    private var shouldClearAll: Bool = true
+    private var lastNum = ""
+    private var lastOperator = ""
     var canDeleteLastDigit = true
+    var stacked = false
+    
     
     let displayKey: String = "display"
     
@@ -38,165 +47,141 @@ public class ContentViewModel:ObservableObject{
     
     func buttonPressed(_ button: CalcButton) {
         canDeleteLastDigit = true
-        shouldClear = false
+        
         stacked = true
-        if button.buttonText == "AC" {
-            clearAll()
-            lastPressedButton = "operand"
-            ACPressed = true
-        } else if let text = button.buttonText {
-            // restrict input
-            guard display.count < 9 && !(text == "." && display.contains(".")) else { return }
-            
-            if text == "%"{
-                if operandStack.last == "0" {
-                    return
+        
+        if let text = button.buttonText {
+            // if button has text, it will be the one of 0~9 or AC or %.
+            if text == "AC" {
+                constantlyLit = false
+                shouldClearAll.toggle()
+                if shouldClearAll == false{
+                    if operatorStack.count != 0 {
+                        if lastPressedButton == .operand {
+                            _ = operandStack.popLast()
+                            operandStack.append("0")
+                            display = "0"
+                        }
+                        if lastPressedButton == .operation {
+                            operandStack.append("0")
+                            display = "0"
+                        }
+                    }else {
+                        clearAll()
+                    }
+                } else {
+                    clearAll()
                 }
-                if lastPressedButton == "operand" {
+                lastPressedButton = .clear
+            } else if text == "%" {
+                canDeleteLastDigit = false
+                if operandStack.last == "0" && operandStack.last == nil {
+                    lastPressedButton = .percent
+                    return
+                } else if lastPressedButton == .operand || lastPressedButton == .percent || lastPressedButton == .equal {
                     let numString = operandStack.popLast() ?? "0"
-                    let num = (Double(numString) ?? 0.0) / 100.0
+                    let num = (convertToDouble(numString) ?? 0.0) / 100.0
                     operandStack.append(String(num))
                     display = convertToString(num)
-                } else {
+                } else if lastPressedButton == .operation {
                     let numString = operandStack.popLast() ?? "0"
-                    let num = (Double(numString) ?? 0.0) / 100.0
+                    let num = (convertToDouble(numString) ?? 0.0) / 100.0
                     operandStack.append(numString)
                     operandStack.append(String(num))
                     display = convertToString(num)
                 }
-            }
-            else if text == "." {
+                lastPressedButton = .percent
+            } else if text == "." {
+                constantlyLit = false
+                lastPressedButton = .operand
                 let operand = (operandStack.popLast() ?? "0").appending(".")
                 operandStack.append(operand)
-            }
-            
-            else {
-                if lastPressedButton == "operand" {  // 如果上次输入是数字，进行追加
+            } else {
+                constantlyLit = false
+                if lastPressedButton == .operand || lastPressedButton == .plusMinus{
                     var operand = operandStack.popLast() ?? "0"
+                    let formattedOperand = operand.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: "")
                     if operand == "0" {
                         operand = text
-                    } else {
-                        operand.append(text)
+                    } else if operand == "-0" {
+                        operand = "-" + text
+                    } else if formattedOperand.count < 9{
+                        var stringFormat = operand
+                        stringFormat = stringFormat.replacingOccurrences(of: ",", with: "")
+                        stringFormat.append(text)
+                        let doubleFormat = convertToDouble(stringFormat) ?? 0.0
+                        operand = convertToString(doubleFormat)
                     }
                     operandStack.append(operand)
-                    display = operand
+                    lastPressedButton = .operand
+                } else if lastPressedButton == .clear || lastPressedButton == .percent || lastPressedButton == .equal {
+                    _ = operandStack.popLast()
+                    operandStack.append(text)
                 }
-                else {  //如果上次输入是算符，显示清空
+                else {
                     display = text
                     operandStack.append(text)
                 }
+                lastPressedButton = .operand
             }
-            lastPressedButton = "operand"
         } else if let action = button.action {
-            shouldClear = true
             canDeleteLastDigit = false
-            if lastPressedButton == "operator" {    //如果上次输入是算符，更改算符
+            
+            if lastPressedButton == .operation && action != .equals && action != .plusMinus{
                 _ = operatorStack.popLast()
             }
             
-            prevPriority = currentPriority;
-            
-            // 处理算符
             switch action {
             case .plusMinus:
-                if display.contains("-") {
-                    let last = operandStack.popLast() ?? "-0"
-                    var lastString = String(last)
-                    lastString.removeFirst()
-                    operandStack.append(lastString)
+                if lastPressedButton == .operation {
+                    operandStack.append("-0")
+                    display = "-0"
                 } else {
                     var last = operandStack.popLast() ?? "0"
-                    last = "-" + last
+                    if last.first == "-" {
+                        last.removeFirst()
+                    } else {
+                        last = "-" + last
+                    }
                     operandStack.append(last)
+                    display = last
                 }
-                shouldClear = false
+                lastPressedButton = .plusMinus
             case .divide:
-                self.action = .divide
-                newAction = true
+                constantlyLit = true
+                lastPressedButton = .operation
                 operatorStack.append("/")
-                currentPriority = 2
+                self.action = .divide
+                operatorPressed()
             case .multiply:
-                self.action = .multiply
-                newAction = true
+                constantlyLit = true
+                lastPressedButton = .operation
                 operatorStack.append("*")
-                currentPriority = 2
+                self.action = .multiply
+                operatorPressed()
             case .subtract:
-                self.action = .subtract
-                newAction = true
+                constantlyLit = true
+                lastPressedButton = .operation
                 operatorStack.append("-")
-                currentPriority = 1
+                self.action = .subtract
+                operatorPressed()
             case .add:
-                self.action = .add
-                newAction = true
+                constantlyLit = true
+                lastPressedButton = .operation
                 operatorStack.append("+")
-                currentPriority = 1
+                self.action = .add
+                operatorPressed()
             case .equals:
+                constantlyLit = false
                 equalButtonPressed()
+                lastPressedButton = .equal
             }
             
-            let currentOperator = operatorStack.popLast() ?? ""
-            //var prevOperator = operatorStack.popLast() ?? ""
-            // 判断前一个算符是否为空，如果是直接结束
-            guard let prevOperator = operatorStack.popLast()
-            else {
-                display = operandStack.last ?? "0"
-                operatorStack.append(currentOperator)
-                lastPressedButton = "operator"
-                print("operandStack: \(operandStack)")
-                print("operationStack: \(operatorStack)")
-                return
-            }
-            prevPriority = judgeOperatorPriority(operation: prevOperator)
-            currentPriority = judgeOperatorPriority(operation: currentOperator)
-            //当当前个算符等级比上一个低时才结算
-            if currentPriority <= prevPriority {
-                var rightNum = operandStack.popLast() ?? "0"
-                var leftNum = operandStack.popLast() ?? "0"
-                var answer = solve(leftNum: leftNum, operation: prevOperator, rightNum: rightNum)
-                operandStack.append(answer)
-                
-                //                // 判断除数是否为0
-                //                if operandStack.last == "inf" {
-                //                    display = "Error"
-                //                    return
-                //                }
-                prevPriority = judgeOperatorPriority(operation: operatorStack.last ?? "")
-                // 判断是否为_+_*_+_ 或 _+_*_* 有三个元素的形式
-                
-                guard let pprevOperator = operatorStack.popLast()
-                else {
-                    // 栈内没有多余运算符
-                    display = operandStack.last ?? "0"
-                    operatorStack.append(currentOperator)
-                    lastPressedButton = "operator"
-                    print("operandStack: \(operandStack)")
-                    print("operationStack: \(operatorStack)")
-                    return
-                }
-                
-                if currentPriority == judgeOperatorPriority(operation: pprevOperator) {
-                    // 是这种形式现在操作数栈里只有两个数, pprevOperator 和 currentOerator 都为 1 级
-                    rightNum = operandStack.popLast() ?? "0"
-                    leftNum = operandStack.popLast() ?? "0"
-                    answer = solve(leftNum: leftNum, operation: pprevOperator, rightNum: rightNum)
-                    operandStack.append(answer)
-                } else {
-                    operatorStack.append(pprevOperator)
-                }
-                
-                
-            } else {
-                operatorStack.append(prevOperator)
-                
-            }
-            operatorStack.append(currentOperator)
-            
-            shouldClear = true
-            lastPressedButton = "operator"
         }
+        
         display = operandStack.last ?? "0"
         print("operandStack: \(operandStack)")
-        print("operationStack: \(operatorStack)")
+        print("operatorStack: \(operatorStack)")
     }
     
     private func judgeOperatorPriority(operation: String) -> Int{
@@ -217,23 +202,21 @@ public class ContentViewModel:ObservableObject{
     private func clearAll() {
         display = "0"
         action = nil
-        shouldClear = false
-        newAction = false
-        stacked = false
-        operandStack = ["0"]
-        //if ACPressedTimes == 0 {
+        constantlyLit = false
+        canDeleteLastDigit = false
+        ACPressed = true
+        operandStack = []
         operatorStack = []
-        //}
-        
+        stacked = false
+        lastNum = ""
+        lastOperator = ""
     }
     
-    private func convertToString(_ number: Double) -> String {
-        return String(format: "%g", number)
-    }
+    
     
     private func solve(leftNum: String, operation: String, rightNum: String) -> String{
-        let operandLeft = Double(leftNum) ?? 0.0
-        let operandRight = Double(rightNum) ?? 0.0
+        let operandLeft = convertToDouble(leftNum) ?? 0.0
+        let operandRight = convertToDouble(rightNum) ?? 0.0
         var answer = 0.0
         
         switch operation {
@@ -248,48 +231,116 @@ public class ContentViewModel:ObservableObject{
         default:
             break
         }
+        print(answer)
         let answerString = convertToString(answer)
         return answerString
     }
     
     private func equalButtonPressed() {
         canDeleteLastDigit = false
-        shouldClear = false
-        if operandStack.count < 2 {
-            // 没有算符，等于原式
-            if operatorStack.count == 0{
-                return
+        
+        if lastPressedButton == .operation,
+           let operand = operandStack.last
+        {
+            operandStack.append(operand)
+        }
+        
+        if operatorStack.count == 1{
+            guard
+                let operation = operatorStack.popLast(),
+                let rightNum = operandStack.popLast(),
+                let leftNum = operandStack.popLast()
+            else {return}
+            
+            lastOperator = operation
+            lastNum = rightNum
+            let answer = solve(leftNum: leftNum, operation: operation, rightNum: rightNum)
+            operandStack.append(answer)
+            display = answer
+        } else if operatorStack.count == 2{
+            guard
+                let secondOperator = operatorStack.popLast(),
+                let firstOperator = operatorStack.popLast(),
+                let thirdNum = operandStack.popLast(),
+                let secondNum = operandStack.popLast(),
+                let firstNum = operandStack.popLast()
+            else { return }
+            
+            lastOperator = secondOperator
+            lastNum = thirdNum
+            let answer1 = solve(leftNum: secondNum, operation: secondOperator, rightNum: thirdNum)
+            let answer2 = solve(leftNum: firstNum, operation: firstOperator, rightNum: answer1)
+            operandStack.append(answer2)
+            display = answer2
+        } else {
+            // count == 0
+            if lastNum == "" && lastOperator == ""
+            {
+                display = operandStack.last ?? "0"
             } else {
-                // 有算符
                 let operand = operandStack.popLast() ?? "0"
-                let operation = operatorStack.popLast() ?? ""
-                let answer = solve(leftNum: operand, operation: operation, rightNum: operand)
+                let answer = solve(leftNum: operand, operation: lastOperator, rightNum: lastNum)
                 operandStack.append(answer)
+                display = answer
+            }
+            
+        }
+    }
+    
+    func operatorPressed() {
+        if operatorStack.count == 1{
+            return
+        } else if operatorStack.count == 2{
+            guard
+                let firstOperator = operatorStack.first,
+                let secondOperator = operatorStack.last
+            else { return }
+            
+            if judgeOperatorPriority(operation: firstOperator) >= judgeOperatorPriority(operation: secondOperator),
+               let secondOperator = operatorStack.popLast(),
+               let firstOperator = operatorStack.popLast() ,
+               let rightNum = operandStack.popLast() ,
+               let leftNum = operandStack.popLast()
+            {
+                let answer = solve(leftNum: leftNum, operation: firstOperator, rightNum: rightNum)
+                operandStack.append(answer)
+                operatorStack.append(secondOperator)
+                print(answer)
+                display = answer
+            } else {
+                return
+            }
+        } else {
+            guard
+                let thirdOperator = operatorStack.popLast(),
+                let secondOperator = operatorStack.popLast(),
+                let firstOperator = operatorStack.popLast()
+            else { return }
+            
+            if
+                let thirdNum = operandStack.popLast(),
+                let secondNum = operandStack.popLast(),
+                let firstNum = operandStack.popLast()
+            {
+                if judgeOperatorPriority(operation: thirdOperator) == judgeOperatorPriority(operation: firstOperator) {
+                    // + x +
+                    let answer1 = solve(leftNum: secondNum, operation: secondOperator, rightNum: thirdNum)
+                    let answer2 = solve(leftNum: firstNum, operation: firstOperator, rightNum: answer1)
+                    operandStack.append(answer2)
+                    operatorStack.append(thirdOperator)
+                    display = answer2
+                } else {
+                    // + x x
+                    let answer = solve(leftNum: secondNum, operation: secondOperator, rightNum: thirdNum)
+                    operandStack.append(answer)
+                    operatorStack.append(firstOperator)
+                    operatorStack.append(thirdOperator)
+                    display = answer
+                }
+            } else {
                 return
             }
         }
-        
-        
-        // 按下等于号前操作数栈内元素只可能有两个或三个
-        if operandStack.count == 2 {
-            guard let rightNum = operandStack.popLast() else { return }
-            guard let leftNum = operandStack.popLast() else { return }
-            guard let operation = operatorStack.popLast() else { return }
-            let answer = solve(leftNum: leftNum, operation: operation, rightNum: rightNum)
-            operandStack.append(answer)
-            
-        } else {
-            // 只可能是_+_*_类似组合
-            guard let rightNum = operandStack.popLast() else { return }
-            guard let operation = operatorStack.popLast() else { return }
-            guard let middleNum = operandStack.popLast() else { return }
-            guard let pervOperation = operatorStack.popLast() else { return }
-            guard let leftNum = operandStack.popLast() else { return }
-            var answer = solve(leftNum: middleNum, operation: operation, rightNum: rightNum)
-            answer = solve(leftNum: leftNum, operation: pervOperation, rightNum: answer)
-            operandStack.append(answer)
-        }
-       
     }
     
     func userSwiped() {
@@ -300,7 +351,7 @@ public class ContentViewModel:ObservableObject{
         else { return }
         _ = lastOperand.popLast()
         if lastOperand == "" {
-            lastOperand = "0" 
+            lastOperand = "0"
         }
         operandStack.append(lastOperand)
         display = lastOperand
@@ -321,4 +372,22 @@ public class ContentViewModel:ObservableObject{
         }
         
     }
+    
+   
+}
+
+func convertToString(_ number: Double, maximumFractionDigits: Int = 15) -> String {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .decimal
+    formatter.maximumFractionDigits = maximumFractionDigits
+    formatter.minimumFractionDigits = 0
+    formatter.roundingMode = .halfUp
+    
+    return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
+}
+
+func convertToDouble(_ value: String) -> Double? {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .decimal
+    return formatter.number(from: value)?.doubleValue
 }

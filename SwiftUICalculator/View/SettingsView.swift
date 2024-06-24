@@ -15,11 +15,6 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
-                    //                    TextField("",text: $settingsViewModel.tiggerPasscode)
-                    //                        .keyboardType(.numberPad)
-                    //                        .onChange(of: settingsViewModel.tiggerPasscode) { oldValue, newValue in
-                    //                        }
-                    
                     Text(settingsViewModel.tiggerPasscode)
                     Button(action: {
                         changePasscode = true
@@ -40,34 +35,34 @@ struct SettingsView: View {
                     }
                 }
                 
-                Section {
-                    Stepper(value: $settingsViewModel.minimumScaleFactor, in: (0.1)...1, step: 0.1) {
-                        Text("\(settingsViewModel.minimumScaleFactor.formatted(.number))")
-                    }
-                    .sensoryFeedback(.impact, trigger: settingsViewModel.minimumScaleFactor) { _, _ in
-                        settingsViewModel.pressFeedback == true
-                    }
-                    
-                } header: {
-                    Text("Minimum Scale Factor")
-                } footer: {
-                    Text("The minimum ratio to which the text will automatically shrink")
-                }
+//                Section {
+//                    Stepper(value: $settingsViewModel.minimumScaleFactor, in: (0.1)...1, step: 0.1) {
+//                        Text("\(settingsViewModel.minimumScaleFactor.formatted(.number))")
+//                    }
+//                    .sensoryFeedback(.impact, trigger: settingsViewModel.minimumScaleFactor) { _, _ in
+//                        settingsViewModel.pressFeedback == true
+//                    }
+//                    
+//                } header: {
+//                    Text("Minimum Scale Factor")
+//                } footer: {
+//                    Text("The minimum ratio to which the text will automatically shrink")
+//                }
                 
-                Section {
-                    Picker(selection: $settingsViewModel.lineLimit) {
-                        ForEach(1..<5) { number in
-                            Text("\(number)")
-                                .font(.headline)
-                                .tag(number)
-                        }
-                    } label: {
-                        Text("Line Limit")
-                    }
-                    .pickerStyle(.menu)
-                } footer: {
-                    Text("Maximum number of lines for character display")
-                }
+//                Section {
+//                    Picker(selection: $settingsViewModel.lineLimit) {
+//                        ForEach(1..<5) { number in
+//                            Text("\(number)")
+//                                .font(.headline)
+//                                .tag(number)
+//                        }
+//                    } label: {
+//                        Text("Line Limit")
+//                    }
+//                    .pickerStyle(.menu)
+//                } footer: {
+//                    Text("Maximum number of lines for character display")
+//                }
                 
                 Section {
                     Slider(value: $settingsViewModel.birthRate, in: 1...10, minimumValueLabel: Text(""), maximumValueLabel: Text(String(format: "%.1f", settingsViewModel.birthRate)), label: {

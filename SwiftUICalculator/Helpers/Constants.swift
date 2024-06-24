@@ -37,54 +37,62 @@ public enum Action: String {
     
 }
 
-public class ShakeText {
-    static let tiggerDict = ["101": "fasdf", "500":"You're shaking iPhone!"]
-}
-
 private var listViewModel = TextReplacementViewModel()
 
 extension String {
-    
     func formatString() -> String {
-//        if listViewModel.items.values.contains(self) {
-//            return self
-//        }
+        let display = self.replacingOccurrences(of: ",", with: "")
+        let doubleDisplay = convertToDouble(display) ?? 0.0
         
-        var display = self.replacingOccurrences(of: "+", with: "")
-        var hasDot = true
-        let isNegtive = (display.first == "-")
-        display = display.replacingOccurrences(of: "-", with: "")
-        
-        if display.contains(",") {
-            return display
-        } else if (display == "nan" || display == "inf"){
-            display = NSLocalizedString("Error", comment: "")
-            return display
-         } else {
-            var integerPart = display.components(separatedBy: ".").first ?? "0"
-            var decimalPart = ""
-
-            if display.components(separatedBy: ".").count > 1 {
-                decimalPart = display.components(separatedBy: ".").last ?? "0"
-            } else {
-                hasDot = false
-            }
-            
-            for i in stride(from: integerPart.count - 3, to: 0, by: -3) {
-                let index = integerPart.index(integerPart.startIndex, offsetBy: i)
-                integerPart.insert(",", at: index)
-            }
-            
-            if isNegtive {
-                integerPart = "-" + integerPart
-            }
-            
-            if hasDot {
-                return integerPart + "." + decimalPart
-            } else {
-                return integerPart + decimalPart
-            }
-           
+        if display == "+∞" || display == "NaN" || display == "-∞" {
+            return NSLocalizedString("Error", comment: "")
         }
+        if doubleDisplay == 0 {
+            return self
+        }
+        let absValue = abs(doubleDisplay)
+        if absValue >= pow(10.0, -8) && absValue < pow(10.0, 9){
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            formatter.maximumFractionDigits = 8
+            formatter.minimumFractionDigits = 0
+            formatter.roundingMode = .halfUp
+
+            return formatter.string(from: NSNumber(value: doubleDisplay)) ?? "\(doubleDisplay)"
+        }
+        
+        if absValue < pow(10.0, -8) {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .scientific
+            formatter.maximumSignificantDigits = 15
+            formatter.positiveFormat = "0.#####E0"
+            formatter.exponentSymbol = "e"
+            
+            let formattedString = formatter.string(from: NSNumber(value: doubleDisplay)) ?? "\(doubleDisplay)"
+            
+            return formattedString
+        }
+        
+        if absValue > pow(10.0, 9) {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .scientific
+            formatter.maximumSignificantDigits = 15
+            formatter.positiveFormat = "0.#####E0"
+            formatter.exponentSymbol = "e"
+            
+            let formattedString = formatter.string(from: NSNumber(value: doubleDisplay)) ?? "\(doubleDisplay)"
+            
+            return formattedString
+        }
+        return self
+    }
+}
+
+
+extension Double {
+    /// Rounds the double to decimal places value
+    func roundTo(places: Int) -> Double {
+        let divisor = pow(10.0, Double(places))
+        return (self * divisor).rounded() / divisor
     }
 }

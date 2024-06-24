@@ -22,7 +22,8 @@ struct TextReplacementView: View {
                         }
                             
                         NavigationLink {
-                            AddPhraseView(originalText: key, replacingText: listviewModel.items[key] ?? "", fontSize: listviewModel.itemFontSize[key] ?? 95, fontWeight: listviewModel.itemFontWeight[key] ?? "Light", title: NSLocalizedString("Change Phrase", comment: ""))
+                            AddPhraseView(originalText: key, replacingText: listviewModel.items[key] ?? "", fontSize: listviewModel.itemFontSize[key] ?? 95, fontWeight: listviewModel.itemFontWeight[key] ?? "Light",  widthAlignment: listviewModel.itemWidthAlignment[key] ?? "trailing", heightAlignment: listviewModel.itemHeightAlignment[key] ?? "bottom", lineSpacing: listviewModel.itemLineSpacing[key] ?? 10.0, title: NSLocalizedString("Change Phrase", comment: ""))
+                            
                                 
                         } label: {
                             EmptyView()

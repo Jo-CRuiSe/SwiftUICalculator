@@ -36,6 +36,7 @@
 		46C16B2E2BEDBCB500AE3508 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C16B2D2BEDBCB500AE3508 /* Constants.swift */; };
 		46C16B312BEDC1C300AE3508 /* CalcButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C16B302BEDC1C300AE3508 /* CalcButtonView.swift */; };
 		46C16B342BEDC7F700AE3508 /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C16B332BEDC7F700AE3508 /* ContentViewModel.swift */; };
+		46E8D36B2C28057C00A268CA /* AddPhrasePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46E8D36A2C28057C00A268CA /* AddPhrasePreviewView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -83,6 +84,7 @@
 		46C16B2D2BEDBCB500AE3508 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		46C16B302BEDC1C300AE3508 /* CalcButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcButtonView.swift; sourceTree = "<group>"; };
 		46C16B332BEDC7F700AE3508 /* ContentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModel.swift; sourceTree = "<group>"; };
+		46E8D36A2C28057C00A268CA /* AddPhrasePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPhrasePreviewView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -189,6 +191,7 @@
 				465DFAF22C02CD54000B8D9B /* SettingsView.swift */,
 				465DFAF42C02D1E6000B8D9B /* TextReplacementView.swift */,
 				461D99652C032B9300345D12 /* AddPhraseView.swift */,
+				46E8D36A2C28057C00A268CA /* AddPhrasePreviewView.swift */,
 				461D99632C03275400345D12 /* ListRowView.swift */,
 			);
 			path = View;
@@ -292,6 +295,7 @@
 				4689297E2BEB323000BDC2E1 /* ContentView.swift in Sources */,
 				46B908882C0D8F0900FC463A /* HeartsAnimationView.swift in Sources */,
 				465DFAF32C02CD54000B8D9B /* SettingsView.swift in Sources */,
+				46E8D36B2C28057C00A268CA /* AddPhrasePreviewView.swift in Sources */,
 				461D99682C03723F00345D12 /* SettingsViewModel.swift in Sources */,
 				462FE93A2C060CC8001DA7CF /* ParticlesViewModel.swift in Sources */,
 				468837E42C12BFB800A6DFC7 /* AboutAppView.swift in Sources */,
