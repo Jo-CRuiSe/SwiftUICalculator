@@ -22,6 +22,7 @@ struct AddPhraseView: View {
     @State var title = NSLocalizedString("Add New Phrase", comment: "")
     @State var savedSuccessfully = false
     @State var showPopover = false
+    @State var placeholderText = NSLocalizedString("Phrase", comment: "")
     let screenWidth = UIScreen.main.bounds.width
     let buttonCount: CGFloat = 4
     let spacingCount = 5
@@ -33,23 +34,24 @@ struct AddPhraseView: View {
                 Section{
                     HStack {
                         TextField("", text: $originalText, prompt: Text("Shortcut"))
+                            .padding(.leading, 3)
                     }
                     HStack {
                         ZStack(alignment: .leading) {
                             if replacingText.isEmpty {
-                                Text("Phrase")
+                               TextEditor(text: $placeholderText)
                                     .foregroundStyle(.secondary).opacity(0.5)
+                                    .disabled(true)
+                                
                             }
                             TextEditor(text: $replacingText)
                         }
                         .lineLimit(2)
                     }
-                    
-                    
                 } footer: {
                     Text("Create input codes to replace phrases, and you can initiate phrase replacement by shaking your iPhone, supporting multi-line input")
                 }
-                
+
                 
                 //                NavigationLink {
                 //                    AddPhrasePreviewView(text: replacingText, widthAlignment: getAlignment(alignment: widthAlignment), heightAlignment: getAlignment(alignment: heightAlignment), spacing: spacing,fontSize: fontSize, fontWeight: fontWeight)
