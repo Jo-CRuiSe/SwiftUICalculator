@@ -43,25 +43,38 @@ extension String {
     func formatString() -> String {
         let display = self.replacingOccurrences(of: ",", with: "")
         let doubleDisplay = convertToDouble(display) ?? 0.0
+        let absValue = abs(doubleDisplay)
         
         if display == "+∞" || display == "NaN" || display == "-∞" {
             return NSLocalizedString("Error", comment: "")
         }
+        
         if doubleDisplay == 0 {
             return self
         }
-        let absValue = abs(doubleDisplay)
+        
+        if absValue >= pow(10.0, 160) || absValue <= pow(10.0, -100){
+            return NSLocalizedString("Error", comment: "")
+        }
+        
         if absValue >= pow(10.0, -8) && absValue < pow(10.0, 9){
             let formatter = NumberFormatter()
             formatter.numberStyle = .decimal
             formatter.maximumFractionDigits = 8
             formatter.minimumFractionDigits = 0
             formatter.roundingMode = .halfUp
+            
+            let decimalPart = String(absValue).components(separatedBy: ".").last ?? ""
+            let integerPart = String(absValue).components(separatedBy: ".").first ?? ""
+            if integerPart.count + decimalPart.count >= 9 {
+                formatter.maximumSignificantDigits = 9
+            }
 
+            print(formatter.string(from: NSNumber(value: doubleDisplay)) ?? "\(doubleDisplay)")
             return formatter.string(from: NSNumber(value: doubleDisplay)) ?? "\(doubleDisplay)"
         }
         
-        if absValue < pow(10.0, -8) {
+        if absValue <= pow(10.0, -8) {
             let formatter = NumberFormatter()
             formatter.numberStyle = .scientific
             formatter.maximumSignificantDigits = 15
@@ -73,7 +86,19 @@ extension String {
             return formattedString
         }
         
-        if absValue > pow(10.0, 9) {
+        if absValue >= pow(10.0, 9) && absValue < pow(10.0, 10){
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .scientific
+            formatter.maximumSignificantDigits = 15
+            formatter.positiveFormat = "0.######E0"
+            formatter.exponentSymbol = "e"
+            
+            let formattedString = formatter.string(from: NSNumber(value: doubleDisplay)) ?? "\(doubleDisplay)"
+            
+            return formattedString
+        }
+        
+        if absValue >= pow(10.0, 10) {
             let formatter = NumberFormatter()
             formatter.numberStyle = .scientific
             formatter.maximumSignificantDigits = 15
@@ -84,6 +109,8 @@ extension String {
             
             return formattedString
         }
+        
+        
         return self
     }
 }

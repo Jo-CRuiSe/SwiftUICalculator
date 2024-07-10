@@ -244,6 +244,14 @@ public class ContentViewModel:ObservableObject{
         {
             operandStack.append(operand)
         }
+       
+        if (operandStack.last == "0" || operandStack.last == nil) && operatorStack.last == "/" {
+            print("The divided number is 0!")
+            print(display)
+            operandStack = ["NaN"]
+            operatorStack = []
+            return
+        }
         
         if operatorStack.count == 1{
             guard
